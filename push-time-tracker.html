@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0051)file:///Users/bkwy/Downloads/service-tracker_9.html -->
+<!-- saved from url=(0052)file:///Users/bkwy/Downloads/service-tracker_10.html -->
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -684,8 +684,6 @@ function renderCourseList(){
 }
 
 function postDinnerSummary(iso,seatIdx){
-  const url=state.webhookUrl;
-  if(!url||!url.startsWith("https://hooks.slack.com/"))return;
   const night=getNight(iso);
   const seating=night.seatings[seatIdx];
   const pushTimes=seating.pushTimes||{};
@@ -693,6 +691,7 @@ function postDinnerSummary(iso,seatIdx){
   const dayName=d.toLocaleDateString("en-US",{weekday:"short",month:"numeric",day:"numeric"});
   const seatLabel=seatIdx===0?"1st seating":"2nd seating";
   const dinnerStart=pushTimes["meryenda"]?fmt24(pushTimes["meryenda"]):"—";
+  const proxyUrl="https://silent-bush-64d9.amber-229.workers.dev/";
 
   let lines=[`📋 *${dayName} · ${seatLabel} · started ${dinnerStart}*\n`];
   let totalMins=0;
@@ -713,18 +712,17 @@ function postDinnerSummary(iso,seatIdx){
     }
   });
   lines.push(`\n*Total  →  ${minsToDur(totalMins)}*`);
-  fetch(url,{method:"POST",body:JSON.stringify({text:lines.join("\n")}),headers:{"Content-Type":"application/json"}})
+  fetch(proxyUrl,{method:"POST",body:JSON.stringify({text:lines.join("\n")}),headers:{"Content-Type":"application/json"}})
     .catch(()=>{});
 }
 function postToSlack(iso,seating,courseLabel,timeDisplay){
-  const url=state.webhookUrl;
-  if(!url||!url.startsWith("https://hooks.slack.com/"))return;
+  const proxyUrl="https://silent-bush-64d9.amber-229.workers.dev/";
   const d=parseISO(iso);
   const dayName=d.toLocaleDateString("en-US",{weekday:"short",month:"numeric",day:"numeric"});
   const seatLabel=seating===1?"1st seating":"2nd seating";
   const text=`📍 *${dayName} · ${seatLabel}*\n${courseLabel} pushed at ${timeDisplay}`;
-  fetch(url,{method:"POST",body:JSON.stringify({text}),headers:{"Content-Type":"application/json"}})
-    .catch(()=>{}); // silent fail — push is already saved locally
+  fetch(proxyUrl,{method:"POST",body:JSON.stringify({text}),headers:{"Content-Type":"application/json"}})
+    .catch(()=>{});
 }
 function logPush(iso,seatIdx,key){
   const night=getNight(iso);

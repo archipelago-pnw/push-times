@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<!-- saved from url=(0052)file:///Users/bkwy/Downloads/service-tracker_12.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Push Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+<link href="./push-tracker_files/css2" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f0f0e;--bg2:#181817;--bg3:#222220;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--border3:rgba(255,255,255,0.22);
+  --text:#f0ede8;--text2:#8c8a84;--text3:#4e4c48;
+  --amber:#d4a853;--amber-bg:rgba(212,168,83,0.1);--amber-border:rgba(212,168,83,0.3);
+  --green:#6dbf8a;--green-bg:rgba(109,191,138,0.09);--green-border:rgba(109,191,138,0.3);
+  --red:#e07070;--red-border:rgba(224,112,112,0.28);
+  --radius:12px;--radius-sm:7px;--radius-xs:5px;
+  --mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+.app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+
+/* NAV */
+.nav{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg)}
+.nav-left{display:flex;flex-direction:column;gap:1px}
+.nav-brand{font-size:13px;font-weight:500;color:var(--amber);letter-spacing:.04em}
+.nav-season{font-size:11px;color:var(--text3)}
+.nav-tabs{display:flex;gap:3px}
+.nav-tab{padding:6px 13px;font-size:12px;font-family:var(--sans);border-radius:var(--radius-xs);border:1px solid transparent;background:transparent;color:var(--text2);cursor:pointer;transition:all .12s}
+.nav-tab:hover{color:var(--text);background:var(--bg3)}
+.nav-tab.active{background:var(--bg3);color:var(--text);border-color:var(--border2)}
+
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.view{padding:16px;display:none}
+.view.active{display:block}
+
+/* ── ENTRY HEADER ── */
+.entry-header{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px}
+
+/* date line */
+.date-line{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.date-line .date-text{font-size:18px;font-weight:500}
+.date-line .date-change{font-size:11px;color:var(--text3);background:transparent;border:1px solid var(--border2);border-radius:var(--radius-xs);padding:4px 9px;cursor:pointer;font-family:var(--sans);transition:all .12s}
+.date-line .date-change:hover{color:var(--text2);border-color:var(--border3)}
+.date-edit-row{display:none;align-items:center;gap:8px;margin-bottom:12px}
+.date-edit-row input[type=date]{background:var(--bg3);border:1px solid var(--amber-border);border-radius:var(--radius-xs);color:var(--text);font-family:var(--sans);font-size:15px;height:40px;padding:0 10px;outline:none;flex:1}
+.date-edit-row .btn-xs{height:40px;padding:0 12px;font-family:var(--sans);font-size:13px;border-radius:var(--radius-xs);border:1px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;flex-shrink:0}
+
+/* seating buttons — always visible */
+.seating-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seat-btn{padding:12px 0;font-size:15px;font-weight:500;font-family:var(--sans);border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;transition:all .15s;text-align:center;line-height:1.3}
+.seat-btn .seat-time{display:block;font-size:11px;font-weight:300;opacity:.6;margin-top:3px;font-family:var(--mono)}
+.seat-btn.active{border-color:var(--amber-border);background:var(--amber-bg);color:var(--amber)}
+.seat-btn.active .seat-time{opacity:.85}
+
+/* ── COURSE CARDS ── */
+.course-list{display:flex;flex-direction:column;gap:8px}
+.cc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:border-color .18s,background .18s}
+.cc.is-next{border-color:var(--amber-border)}
+.cc.is-pushed{border-color:var(--green-border);background:var(--green-bg)}
+.cc-main{display:flex;align-items:center;gap:10px;padding:13px 14px}
+.cc-info{flex:1;min-width:0}
+.cc-name{font-size:16px;font-weight:500;line-height:1.2}
+.cc-sub{font-size:12px;margin-top:4px}
+.cc-sub.stamped{color:var(--green);font-family:var(--mono)}
+.cc-sub.hint{color:var(--amber);font-style:italic}
+
+/* clock button */
+.clock-btn{height:52px;width:64px;font-size:24px;border-radius:var(--radius-sm);border:1px solid var(--amber-border);background:var(--amber-bg);color:var(--amber);cursor:pointer;transition:all .1s;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.clock-btn:active{transform:scale(.93)}
+.clock-btn.done{border-color:var(--green-border);background:var(--green-bg);color:var(--green);font-size:22px}
+
+/* write-in toggle */
+.writein-toggle{font-size:11px;color:var(--text3);background:transparent;border:none;cursor:pointer;font-family:var(--sans);padding:0;margin-right:6px;transition:color .12s}
+.writein-toggle:hover{color:var(--text2)}
+
+/* write-in row */
+.writein-row{display:flex;align-items:center;gap:7px;padding:10px 14px;border-top:1px solid var(--border);background:var(--bg3)}
+.writein-row input[type=text]{background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius-xs);color:var(--text);font-family:var(--mono);font-size:18px;height:40px;padding:0 10px;outline:none;flex:1;width:auto}
+.writein-row input[type=text]:focus{border-color:var(--amber)}
+.writein-row .pm-label{font-size:14px;color:var(--text2);font-family:var(--mono);flex-shrink:0}
+.btn-set{height:40px;padding:0 16px;font-family:var(--sans);font-size:13px;font-weight:500;border-radius:var(--radius-xs);border:1px solid var(--amber-border);background:var(--amber-bg);color:var(--amber);cursor:pointer;white-space:nowrap}
+.btn-cancel-wi{height:40px;padding:0 12px;font-family:var(--sans);font-size:13px;border-radius:var(--radius-xs);border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer}
+
+/* undo / edit on pushed */
+.cc-actions{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.btn-micro{height:26px;padding:0 9px;font-size:11px;font-family:var(--sans);border-radius:var(--radius-xs);border:1px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;transition:all .12s}
+.btn-micro:hover{color:var(--text2);border-color:var(--border3)}
+
+/* ── SETUP ── */
+.section{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden}
+.section-hd{padding:10px 14px;font-size:10px;font-weight:500;letter-spacing:.09em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);background:var(--bg)}
+.section-bd{padding:14px}
+.field-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.field-row:last-child{margin-bottom:0}
+.field-lbl{font-size:12px;color:var(--text2);width:80px;flex-shrink:0}
+input[type=text],input[type=date],select{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-xs);color:var(--text);font-family:var(--sans);font-size:14px;height:38px;padding:0 11px;outline:none;width:100%}
+input[type=text]:focus,input[type=date]:focus,select:focus{border-color:var(--amber)}
+input::placeholder{color:var(--text3)}
+select option{background:var(--bg3)}
+.song-table{width:100%;border-collapse:collapse}
+.song-table th{font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:0 0 7px;text-align:left;border-bottom:1px solid var(--border)}
+.song-table td{padding:5px 0;border-bottom:1px solid var(--border);vertical-align:middle}
+.song-table tr:last-child td{border-bottom:none}
+.song-table td:first-child{width:36%;font-size:13px;color:var(--text2);padding-right:10px;padding-top:8px}
+.btn{height:36px;padding:0 14px;font-family:var(--sans);font-size:13px;border-radius:var(--radius-xs);border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;transition:all .12s;white-space:nowrap}
+.btn:hover{background:var(--bg3);color:var(--text)}
+.btn-amber{border-color:var(--amber-border);background:var(--amber-bg);color:var(--amber)}
+.btn-amber:hover{background:rgba(212,168,83,.18)}
+.btn-sm{height:30px;padding:0 11px;font-size:12px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.dinner-item{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--bg3);border-radius:var(--radius-sm);margin-bottom:6px;font-size:13px}
+.dinner-item:last-child{margin-bottom:0}
+.di-label{flex:1;font-weight:500}
+.di-meta{font-family:var(--mono);font-size:11px;color:var(--text3)}
+.sync-box{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;font-size:13px;line-height:1.6;color:var(--text2)}
+.code-block{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-xs);padding:10px;font-family:var(--mono);font-size:11px;color:var(--text2);word-break:break-all;max-height:72px;overflow-y:auto;margin:8px 0}
+
+/* ── DASHBOARD ── */
+.dash-tabs{display:flex;gap:5px;margin-bottom:14px}
+.dash-tab{padding:6px 13px;font-size:12px;font-family:var(--sans);border-radius:var(--radius-xs);border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;transition:all .12s}
+.dash-tab.active{background:var(--bg3);color:var(--text);border-color:var(--border2)}
+.table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px}
+.table-ttl{padding:9px 13px;font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);background:var(--bg)}
+.dt{width:100%;border-collapse:collapse}
+.dt th{font-size:10px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);background:var(--bg)}
+.dt td{padding:8px 12px;font-size:13px;border-bottom:1px solid var(--border)}
+.dt tr:last-child td{border-bottom:none}
+.dt tr:hover td{background:rgba(255,255,255,.015)}
+.mono{font-family:var(--mono)}
+.muted{color:var(--text3)}
+.cue-t{color:var(--amber);font-family:var(--mono)}
+.empty{color:var(--text3);font-size:13px;padding:16px 0}
+
+@media(max-width:480px){
+  .nav{padding:10px 13px}
+  .view{padding:12px}
+  .cc-name{font-size:15px}
+  .clock-btn{height:48px;width:58px;font-size:22px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<nav class="nav">
+  <div class="nav-left">
+    <div class="nav-brand">◆ Push Tracker</div>
+    <div class="nav-season" id="nav-season"></div>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showView(&#39;entry&#39;)">Entry</button>
+    <button class="nav-tab" onclick="showView(&#39;setup&#39;)">Setup</button>
+    <button class="nav-tab" onclick="showView(&#39;dash&#39;)">Dashboard</button>
+  </div>
+</nav>
+<div class="content">
+
+<!-- ══ ENTRY ══ -->
+<div class="view active" id="view-entry">
+  <div class="entry-header">
+
+    <!-- date display -->
+    <div class="date-line" id="date-display-line">
+      <span class="date-text" id="date-text">Wednesday, June 3</span>
+      <button class="date-change" onclick="showDateEdit()">change date</button>
+    </div>
+    <!-- date edit (hidden by default) -->
+    <div class="date-edit-row" id="date-edit-row">
+      <input type="date" id="date-picker" onchange="applyDate()">
+      <button class="btn-xs" onclick="hideDateEdit()">cancel</button>
+    </div>
+
+    <!-- seating — always visible, no setup needed -->
+    <div class="seating-row">
+      <button class="seat-btn" id="seat-1" onclick="pickSeating(1)">
+        1st seating
+        <span class="seat-time" id="seat-time-1">5:30 PM</span>
+      </button>
+      <button class="seat-btn active" id="seat-2" onclick="pickSeating(2)">
+        2nd seating
+        <span class="seat-time" id="seat-time-2">8:30 PM</span>
+      </button>
+    </div>
+
+  </div>
+  <div class="course-list" id="course-list"><div class="cc is-pushed" id="cc-meryenda">
+        <div class="cc-main">
+          <div class="cc-info">
+            <div class="cc-name">Meryenda</div>
+            <div class="cc-sub muted">Portal to the Pacific</div>
+            <div class="cc-sub" style="color:var(--amber);font-size:11px;margin-top:2px">♪ Intro playlist</div>
+            <div class="cc-sub stamped">⏱ dinner started —</div>
+          </div>
+          <div class="cc-actions">
+            
+          </div>
+        </div>
+      </div><div class="cc  is-next" id="cc-alaskeros">
+      <div class="cc-main">
+        <div class="cc-info"><div class="cc-name">Alaskeros</div><div class="cc-sub muted">The Cable Layers</div><div class="cc-sub" style="color:var(--amber);font-size:11px;margin-top:2px">♪ Tala</div><div class="cc-sub hint">up next</div></div>
+        <div class="cc-actions">
+        <button class="writein-toggle" onclick="toggleWI(&#39;alaskeros&#39;)">write in</button>
+        <button class="clock-btn" onclick="logPush(&#39;2026-06-03&#39;,1,&#39;alaskeros&#39;)">⏱</button>
+      </div>
+      </div>
+    </div><div class="cc  " id="cc-anb">
+      <div class="cc-main">
+        <div class="cc-info"><div class="cc-name">ANB</div><div class="cc-sub muted">The UW Filipino Club</div><div class="cc-sub" style="color:var(--amber);font-size:11px;margin-top:2px">♪ The Ave</div></div>
+        <div class="cc-actions">
+        <button class="writein-toggle" onclick="toggleWI(&#39;anb&#39;)">write in</button>
+        <button class="clock-btn" onclick="logPush(&#39;2026-06-03&#39;,1,&#39;anb&#39;)">⏱</button>
+      </div>
+      </div>
+    </div><div class="cc  " id="cc-mahabang_buhay">
+      <div class="cc-main">
+        <div class="cc-info"><div class="cc-name">Mahabang Buhay</div><div class="cc-sub muted">Seattle's Hooverville</div><div class="cc-sub" style="color:var(--amber);font-size:11px;margin-top:2px">♪ Safe Place for Us</div></div>
+        <div class="cc-actions">
+        <button class="writein-toggle" onclick="toggleWI(&#39;mahabang_buhay&#39;)">write in</button>
+        <button class="clock-btn" onclick="logPush(&#39;2026-06-03&#39;,1,&#39;mahabang_buhay&#39;)">⏱</button>
+      </div>
+      </div>
+    </div><div class="cc  " id="cc-tradition">
+      <div class="cc-main">
+        <div class="cc-info"><div class="cc-name">Tradition</div><div class="cc-sub muted">Local 7 Beginnings</div><div class="cc-sub" style="color:var(--amber);font-size:11px;margin-top:2px">♪ Planting Rice</div></div>
+        <div class="cc-actions">
+        <button class="writein-toggle" onclick="toggleWI(&#39;tradition&#39;)">write in</button>
+        <button class="clock-btn" onclick="logPush(&#39;2026-06-03&#39;,1,&#39;tradition&#39;)">⏱</button>
+      </div>
+      </div>
+    </div><div class="cc  " id="cc-tailor_made">
+      <div class="cc-main">
+        <div class="cc-info"><div class="cc-name">Tailor Made</div><div class="cc-sub muted">Two Marias</div><div class="cc-sub" style="color:var(--amber);font-size:11px;margin-top:2px">♪ Icy Girl</div></div>
+        <div class="cc-actions">
+        <button class="writein-toggle" onclick="toggleWI(&#39;tailor_made&#39;)">write in</button>
+        <button class="clock-btn" onclick="logPush(&#39;2026-06-03&#39;,1,&#39;tailor_made&#39;)">⏱</button>
+      </div>
+      </div>
+    </div><div class="cc  " id="cc-banyuhay">
+      <div class="cc-main">
+        <div class="cc-info"><div class="cc-name">Banyuhay</div><div class="cc-sub" style="color:var(--amber);font-size:11px;margin-top:2px">♪ Cold War</div></div>
+        <div class="cc-actions">
+        <button class="writein-toggle" onclick="toggleWI(&#39;banyuhay&#39;)">write in</button>
+        <button class="clock-btn" onclick="logPush(&#39;2026-06-03&#39;,1,&#39;banyuhay&#39;)">⏱</button>
+      </div>
+      </div>
+    </div><div class="cc  " id="cc-panghimagas_1">
+      <div class="cc-main">
+        <div class="cc-info"><div class="cc-name">Panghimagas 1</div><div class="cc-sub muted">Silme Domingo &amp; Gene Viernes</div><div class="cc-sub" style="color:var(--amber);font-size:11px;margin-top:2px">♪ Awitin Mo, Issayaw</div></div>
+        <div class="cc-actions">
+        <button class="writein-toggle" onclick="toggleWI(&#39;panghimagas_1&#39;)">write in</button>
+        <button class="clock-btn" onclick="logPush(&#39;2026-06-03&#39;,1,&#39;panghimagas_1&#39;)">⏱</button>
+      </div>
+      </div>
+    </div><div class="cc  " id="cc-panghimagas_2">
+      <div class="cc-main">
+        <div class="cc-info"><div class="cc-name">Panghimagas 2</div><div class="cc-sub muted">Strawberry Queen</div><div class="cc-sub" style="color:var(--amber);font-size:11px;margin-top:2px">♪ Thoughts Overflow</div></div>
+        <div class="cc-actions">
+        <button class="writein-toggle" onclick="toggleWI(&#39;panghimagas_2&#39;)">write in</button>
+        <button class="clock-btn" onclick="logPush(&#39;2026-06-03&#39;,1,&#39;panghimagas_2&#39;)">⏱</button>
+      </div>
+      </div>
+    </div><div class="cc  " id="cc-kamayan">
+      <div class="cc-main">
+        <div class="cc-info"><div class="cc-name">Kamayan</div><div class="cc-sub muted">Not Yet Victorio</div></div>
+        <div class="cc-actions">
+        <button class="writein-toggle" onclick="toggleWI(&#39;kamayan&#39;)">write in</button>
+        <button class="clock-btn" onclick="logPush(&#39;2026-06-03&#39;,1,&#39;kamayan&#39;)">⏱</button>
+      </div>
+      </div>
+    </div></div>
+</div>
+
+<!-- ══ SETUP ══ -->
+<div class="view" id="view-setup">
+
+  <div class="section">
+    <div class="section-hd">Season</div>
+    <div class="section-bd">
+      <div class="field-row">
+        <span class="field-lbl">Name</span>
+        <input type="text" id="inp-season" placeholder="e.g. Winter 2026" oninput="state.seasonName=this.value;saveState();renderBrand()">
+      </div>
+      <div class="field-row">
+        <span class="field-lbl">Start date</span>
+        <input type="date" id="inp-start" style="width:auto;flex:1">
+      </div>
+      <div class="field-row">
+        <span class="field-lbl">End date</span>
+        <input type="date" id="inp-end" style="width:auto;flex:1">
+      </div>
+      <div class="btn-row" style="margin-top:12px">
+        <button class="btn btn-amber" onclick="generateSeason()">Generate season nights</button>
+      </div>
+      <p style="font-size:11px;color:var(--text3);margin-top:8px">Creates a dinner record for every Wed–Sat night in the date range.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd">Nights this season <span id="dinner-count" style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text3);font-size:11px;margin-left:6px">3 nights</span></div>
+    <div class="section-bd">
+      <div id="dinner-list"><div class="dinner-item">
+      <span class="di-label">Tue 06/02 </span>
+      <span class="di-meta">5:00 PM · 8:00 PM</span>
+      <span style="font-size:11px;color:var(--text3)">3 pushes</span>
+      <button class="btn btn-sm" onclick="removeNight(&#39;2026-06-02&#39;)">×</button>
+    </div><div class="dinner-item">
+      <span class="di-label">Wed 06/03 </span>
+      <span class="di-meta">5:30 PM · 8:30 PM</span>
+      <span style="font-size:11px;color:var(--text3)">0 pushes</span>
+      <button class="btn btn-sm" onclick="removeNight(&#39;2026-06-03&#39;)">×</button>
+    </div><div class="dinner-item">
+      <span class="di-label">Thu 06/04 </span>
+      <span class="di-meta">5:00 PM · 8:00 PM</span>
+      <span style="font-size:11px;color:var(--text3)">0 pushes</span>
+      <button class="btn btn-sm" onclick="removeNight(&#39;2026-06-04&#39;)">×</button>
+    </div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd">Playlist — songs per course</div>
+    <div class="section-bd">
+      <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Fill in once you have your averages. The cue sheet updates automatically.</p>
+      <table class="song-table">
+        <thead><tr><th>Course</th><th>Song</th></tr></thead>
+        <tbody id="song-tbody">
+    <tr>
+      <td>Meryenda</td>
+      <td><input type="text" value="Intro playlist" placeholder="—" oninput="state.songs[&#39;meryenda&#39;]=this.value;saveState()"></td>
+    </tr>
+    <tr>
+      <td>Alaskeros</td>
+      <td><input type="text" value="Tala" placeholder="—" oninput="state.songs[&#39;alaskeros&#39;]=this.value;saveState()"></td>
+    </tr>
+    <tr>
+      <td>ANB</td>
+      <td><input type="text" value="The Ave" placeholder="—" oninput="state.songs[&#39;anb&#39;]=this.value;saveState()"></td>
+    </tr>
+    <tr>
+      <td>Mahabang Buhay</td>
+      <td><input type="text" value="Safe Place for Us" placeholder="—" oninput="state.songs[&#39;mahabang_buhay&#39;]=this.value;saveState()"></td>
+    </tr>
+    <tr>
+      <td>Tradition</td>
+      <td><input type="text" value="Planting Rice" placeholder="—" oninput="state.songs[&#39;tradition&#39;]=this.value;saveState()"></td>
+    </tr>
+    <tr>
+      <td>Tailor Made</td>
+      <td><input type="text" value="Icy Girl" placeholder="—" oninput="state.songs[&#39;tailor_made&#39;]=this.value;saveState()"></td>
+    </tr>
+    <tr>
+      <td>Banyuhay</td>
+      <td><input type="text" value="Cold War" placeholder="—" oninput="state.songs[&#39;banyuhay&#39;]=this.value;saveState()"></td>
+    </tr>
+    <tr>
+      <td>Panghimagas 1</td>
+      <td><input type="text" value="Awitin Mo, Issayaw" placeholder="—" oninput="state.songs[&#39;panghimagas_1&#39;]=this.value;saveState()"></td>
+    </tr>
+    <tr>
+      <td>Panghimagas 2</td>
+      <td><input type="text" value="Thoughts Overflow" placeholder="—" oninput="state.songs[&#39;panghimagas_2&#39;]=this.value;saveState()"></td>
+    </tr>
+    <tr>
+      <td>Kamayan</td>
+      <td><input type="text" value="" placeholder="—" oninput="state.songs[&#39;kamayan&#39;]=this.value;saveState()"></td>
+    </tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd">Slack backup</div>
+    <div class="section-bd">
+      <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Every push posts to your Slack channel automatically. Paste your webhook URL once and forget it.</p>
+      <div class="field-row">
+        <span class="field-lbl">Webhook URL</span>
+        <input type="text" id="inp-webhook" placeholder="https://hooks.slack.com/services/..." oninput="state.webhookUrl=this.value;saveState()">
+      </div>
+      <div id="webhook-status" style="font-size:12px;margin-top:8px"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-hd">Sync between devices</div>
+    <div class="section-bd">
+      <div class="sync-box">
+        Export a code on the iPad, paste into Import on your laptop to sync all push data.
+        <div class="btn-row">
+          <button class="btn btn-amber" onclick="exportData()">Export</button>
+          <button class="btn" onclick="importData()">Import</button>
+          <button class="btn" style="color:var(--red);border-color:rgba(224,112,112,.28)" onclick="clearAll()">Clear all</button>
+        </div>
+        <div id="export-out" style="display:none">
+          <div class="code-block" id="export-code"></div>
+          <button class="btn btn-sm" style="margin-top:2px" onclick="copyExport()">Copy to clipboard</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ DASHBOARD ══ -->
+<div class="view" id="view-dash">
+  <div class="dash-tabs">
+    <button class="dash-tab active" onclick="setDashTab(&#39;avgs&#39;,this)">Averages</button>
+    <button class="dash-tab" onclick="setDashTab(&#39;cue&#39;,this)">Cue sheet</button>
+    <button class="dash-tab" onclick="setDashTab(&#39;raw&#39;,this)">Raw logs</button>
+  </div>
+  <div id="dash-content"></div>
+</div>
+
+</div>
+</div>
+<script>
+const COURSES=[
+  {key:"meryenda",      label:"Meryenda",      story:"Portal to the Pacific",    song:"Intro playlist"},
+  {key:"alaskeros",     label:"Alaskeros",     story:"The Cable Layers",         song:"Tala"},
+  {key:"anb",           label:"ANB",           story:"The UW Filipino Club",     song:"The Ave"},
+  {key:"mahabang_buhay",label:"Mahabang Buhay",story:"Seattle's Hooverville",    song:"Safe Place for Us"},
+  {key:"tradition",     label:"Tradition",     story:"Local 7 Beginnings",       song:"Planting Rice"},
+  {key:"tailor_made",   label:"Tailor Made",   story:"Two Marias",               song:"Icy Girl"},
+  {key:"banyuhay",      label:"Banyuhay",      story:"",                         song:"Cold War"},
+  {key:"panghimagas_1", label:"Panghimagas 1", story:"Silme Domingo & Gene Viernes", song:"Awitin Mo, Issayaw"},
+  {key:"panghimagas_2", label:"Panghimagas 2", story:"Strawberry Queen",         song:"Thoughts Overflow"},
+  {key:"kamayan",       label:"Kamayan",       story:"Not Yet Victorio",         song:""},
+];
+
+// Start times by day: Wed is 5:30/8:30, Thu–Sat is 5:00/8:00
+const DAY_TIMES={3:["17:30","20:30"],4:["17:00","20:00"],5:["17:00","20:00"],6:["17:00","20:00"]}; // 3=Wed,4=Thu,5=Fri,6=Sat
+
+let state={seasonName:"",songs:{},nights:{},activeDateISO:null,activeSeating:1,webhookUrl:"https://hooks.slack.com/services/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"};
+// nights keyed by ISO date string, each night = {date, seatings:[{pushTimes:{}},{pushTimes:{}}]}
+let openWriteIn=null;
+let dashTab="avgs";
+
+// ── PERSISTENCE ──
+function saveState(){try{localStorage.setItem("svc5",JSON.stringify(state));}catch(e){}}
+function loadState(){
+  try{const d=localStorage.getItem("svc5");if(d){const saved=JSON.parse(d);state={...state,...saved};}}catch(e){}
+  if(!state.songs)state.songs={};
+  if(!state.nights)state.nights={};
+  if(!state.activeSeating)state.activeSeating=1;
+  if(!state.webhookUrl)state.webhookUrl="https://hooks.slack.com/services/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";
+  COURSES.forEach(c=>{if(!state.songs[c.key])state.songs[c.key]=c.song||"";});
+}
+function exportData(){
+  const code=btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+  document.getElementById("export-out").style.display="block";
+  document.getElementById("export-code").textContent=code;
+}
+function copyExport(){
+  navigator.clipboard.writeText(document.getElementById("export-code").textContent)
+    .then(()=>alert("Copied! Paste into Import on your laptop."));
+}
+function importData(){
+  const code=prompt("Paste the export code:");
+  if(!code)return;
+  try{
+    const imported=JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
+    state={...state,...imported};
+    if(!state.songs)state.songs={};
+    if(!state.nights)state.nights={};
+    COURSES.forEach(c=>{if(!state.songs[c.key])state.songs[c.key]=c.song||"";});
+    saveState();renderBrand();renderSetup();renderEntry();renderDash();
+    alert("Imported successfully.");
+  }catch(e){alert("Invalid code.");}
+}
+function clearAll(){
+  if(!confirm("Clear all data?"))return;
+  state={seasonName:"",songs:{},nights:{},activeDateISO:null,activeSeating:1};
+  COURSES.forEach(c=>state.songs[c.key]="");
+  saveState();renderBrand();renderSetup();renderEntry();renderDash();
+}
+
+// ── UTILS ──
+function todayISO(){
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+function parseISO(iso){
+  const [y,m,d]=iso.split("-").map(Number);
+  return new Date(y,m-1,d);
+}
+function formatISO(date){
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
+}
+function formatDateDisplay(iso){
+  const d=parseISO(iso);
+  return d.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"});
+}
+function toMins(t){if(!t)return null;const p=t.split(":");return parseInt(p[0])*60+parseInt(p[1]);}
+function minsToDisplay(m){
+  if(m===null)return "—";
+  m=((m%1440)+1440)%1440;
+  const h=Math.floor(m/60),mn=m%60,ampm=h>=12?"PM":"AM",h12=h%12||12;
+  return `${h12}:${mn.toString().padStart(2,"0")} ${ampm}`;
+}
+function fmt24(t){return t?minsToDisplay(toMins(t)):"—";}
+function minsToDur(m){
+  if(m===null||m<0)return "—";
+  const h=Math.floor(m/60),mn=m%60;
+  return h>0?`${h}h ${mn}m`:`${mn}m`;
+}
+function nowTime(){
+  const n=new Date();
+  return n.getHours().toString().padStart(2,"0")+":"+n.getMinutes().toString().padStart(2,"0");
+}
+function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+
+// get or create night record
+function getNight(iso){
+  if(!state.nights[iso]){
+    const d=parseISO(iso);
+    const dow=d.getDay(); // 0=Sun
+    const times=DAY_TIMES[dow]||["17:00","20:00"];
+    state.nights[iso]={date:iso,times,seatings:[{pushTimes:{}},{pushTimes:{}}]};
+    saveState();
+  }
+  return state.nights[iso];
+}
+function getSeatingTimes(iso){
+  const d=parseISO(iso);
+  const dow=d.getDay();
+  return DAY_TIMES[dow]||["17:00","20:00"];
+}
+
+// ── VIEWS ──
+function showView(v){
+  document.querySelectorAll(".view").forEach(el=>el.classList.remove("active"));
+  document.querySelectorAll(".nav-tab").forEach(el=>el.classList.remove("active"));
+  document.getElementById("view-"+v).classList.add("active");
+  const idx=["entry","setup","dash"].indexOf(v);
+  if(idx>=0)document.querySelectorAll(".nav-tab")[idx].classList.add("active");
+  if(v==="entry")renderEntry();
+  if(v==="setup")renderSetup();
+  if(v==="dash")renderDash();
+}
+function renderBrand(){
+  document.getElementById("nav-season").textContent=state.seasonName||"";
+}
+
+// ── DATE ──
+function showDateEdit(){
+  document.getElementById("date-display-line").style.display="none";
+  const row=document.getElementById("date-edit-row");
+  row.style.display="flex";
+  document.getElementById("date-picker").value=state.activeDateISO||todayISO();
+}
+function hideDateEdit(){
+  document.getElementById("date-display-line").style.display="flex";
+  document.getElementById("date-edit-row").style.display="none";
+}
+function applyDate(){
+  const v=document.getElementById("date-picker").value;
+  if(v){state.activeDateISO=v;saveState();}
+  hideDateEdit();
+  renderDateText();
+  renderSeatingTimes();
+  renderCourseList();
+}
+function renderDateText(){
+  const iso=state.activeDateISO||todayISO();
+  document.getElementById("date-text").textContent=formatDateDisplay(iso);
+}
+
+// ── SEATING ──
+function renderSeatingTimes(){
+  const iso=state.activeDateISO||todayISO();
+  const times=getSeatingTimes(iso);
+  document.getElementById("seat-time-1").textContent=fmt24(times[0]);
+  document.getElementById("seat-time-2").textContent=fmt24(times[1]);
+}
+function pickSeating(n){
+  state.activeSeating=n;
+  openWriteIn=null;
+  saveState();
+  document.getElementById("seat-1").classList.toggle("active",n===1);
+  document.getElementById("seat-2").classList.toggle("active",n===2);
+  // auto-clock meryenda as dinner start the moment seating is selected
+  const iso=state.activeDateISO||todayISO();
+  const night=getNight(iso);
+  const seatIdx=n-1;
+  if(!night.seatings[seatIdx].pushTimes["meryenda"]){
+    night.seatings[seatIdx].pushTimes["meryenda"]=nowTime();
+    saveState();
+    postToSlack(iso,n,"Meryenda — Portal to the Pacific (dinner start)",fmt24(night.seatings[seatIdx].pushTimes["meryenda"]));
+  }
+  renderCourseList();
+}
+function renderSeatingButtons(){
+  const n=state.activeSeating||1;
+  document.getElementById("seat-1").classList.toggle("active",n===1);
+  document.getElementById("seat-2").classList.toggle("active",n===2);
+  renderSeatingTimes();
+}
+
+// ── COURSES ──
+function renderEntry(){
+  if(!state.activeDateISO)state.activeDateISO=todayISO();
+  renderDateText();
+  renderSeatingButtons();
+  renderCourseList();
+}
+function renderCourseList(){
+  const el=document.getElementById("course-list");
+  const iso=state.activeDateISO||todayISO();
+  const night=getNight(iso);
+  const seatIdx=(state.activeSeating||1)-1;
+  const seating=night.seatings[seatIdx];
+  const pushTimes=seating.pushTimes||{};
+  const firstUnpushed=COURSES.findIndex(c=>c.key!=="meryenda"&&!pushTimes[c.key]);
+
+  el.innerHTML=COURSES.map((c,i)=>{
+    const pushed=!!pushTimes[c.key];
+    const isNext=i===firstUnpushed;
+    const loggedTime=pushTimes[c.key]||"";
+    const isWI=openWriteIn===c.key;
+    const storyLine=c.story?`<div class="cc-sub muted">${c.story}</div>`:"";
+    const song=state.songs[c.key]||"";
+    const songLine=song?`<div class="cc-sub" style="color:var(--amber);font-size:11px;margin-top:2px">♪ ${song}</div>`:"";
+
+    // meryenda auto-clocks on seating selection — no push button
+    if(c.key==="meryenda"){
+      const wiRow=isWI?`<div class="writein-row">
+        <input type="text" id="wi-meryenda" value="${loggedTime?display12(loggedTime):""}" placeholder="6:23" maxlength="5" inputmode="decimal"/>
+        <span class="pm-label">PM</span>
+        <button class="btn-set" onclick="saveWI('${iso}',${seatIdx},'meryenda')">Save</button>
+        <button class="btn-cancel-wi" onclick="cancelWI()">Cancel</button>
+      </div>`:"";
+      return`<div class="cc is-pushed" id="cc-meryenda">
+        <div class="cc-main">
+          <div class="cc-info">
+            <div class="cc-name">${c.label}</div>
+            ${storyLine}
+            ${songLine}
+            <div class="cc-sub stamped">⏱ dinner started ${pushed?fmt24(loggedTime):"—"}</div>
+          </div>
+          <div class="cc-actions">
+            ${pushed?`<button class="btn-micro" onclick="openEdit('${iso}',${seatIdx},'meryenda')">edit</button>`:""}
+          </div>
+        </div>${wiRow}
+      </div>`;
+    }
+
+    let sub="";
+    if(pushed) sub=`<div class="cc-sub stamped">✓ ${fmt24(loggedTime)}</div>`;
+    else if(isNext) sub=`<div class="cc-sub hint">up next</div>`;
+
+    let actions="";
+    if(pushed){
+      actions=`<div class="cc-actions">
+        <button class="btn-micro" onclick="openEdit('${iso}',${seatIdx},'${c.key}')">edit</button>
+        <button class="btn-micro" onclick="unpush('${iso}',${seatIdx},'${c.key}')">undo</button>
+        <button class="clock-btn done" onclick="unpush('${iso}',${seatIdx},'${c.key}')">✓</button>
+      </div>`;
+    } else {
+      actions=`<div class="cc-actions">
+        <button class="writein-toggle" onclick="toggleWI('${c.key}')">${isWI?"cancel":"write in"}</button>
+        <button class="clock-btn" onclick="logPush('${iso}',${seatIdx},'${c.key}')">⏱</button>
+      </div>`;
+    }
+
+    let wiRow="";
+    if(isWI){
+      const wiDisplay=loggedTime?display12(loggedTime):"";
+      wiRow=`<div class="writein-row">
+        <input type="text" id="wi-${c.key}" value="${wiDisplay}" placeholder="6:23" maxlength="5" inputmode="decimal"/>
+        <span class="pm-label">PM</span>
+        <button class="btn-set" onclick="saveWI('${iso}',${seatIdx},'${c.key}')">Set</button>
+        <button class="btn-cancel-wi" onclick="cancelWI()">Cancel</button>
+      </div>`;
+    }
+
+    return`<div class="cc ${pushed?"is-pushed":""} ${!pushed&&isNext?"is-next":""}" id="cc-${c.key}">
+      <div class="cc-main">
+        <div class="cc-info"><div class="cc-name">${c.label}</div>${storyLine}${songLine}${sub}</div>
+        ${actions}
+      </div>${wiRow}
+    </div>`;
+  }).join("");
+}
+
+function postDinnerSummary(iso,seatIdx){
+  const night=getNight(iso);
+  const seating=night.seatings[seatIdx];
+  const pushTimes=seating.pushTimes||{};
+  const d=parseISO(iso);
+  const dayName=d.toLocaleDateString("en-US",{weekday:"short",month:"numeric",day:"numeric"});
+  const seatLabel=seatIdx===0?"1st seating":"2nd seating";
+  const dinnerStart=pushTimes["meryenda"]?fmt24(pushTimes["meryenda"]):"—";
+  const proxyUrl="https://silent-bush-64d9.amber-229.workers.dev/";
+
+  let lines=[`📋 *${dayName} · ${seatLabel} · started ${dinnerStart}*\n`];
+  let totalMins=0;
+  COURSES.forEach((c,i)=>{
+    const push=pushTimes[c.key];
+    if(!push)return;
+    const nextKey=i<COURSES.length-1?COURSES[i+1].key:null;
+    const end=nextKey?pushTimes[nextKey]:null;
+    const fullLabel=c.story?`${c.label} — ${c.story}`:c.label;
+    if(end){
+      const dur=toMins(end)-toMins(push);
+      if(dur>=0){
+        totalMins+=dur;
+        lines.push(`*${fullLabel}*  →  ${minsToDur(dur)}`);
+      }
+    } else {
+      lines.push(`*${fullLabel}*  →  pushed ${fmt24(push)}`);
+    }
+  });
+  lines.push(`\n*Total  →  ${minsToDur(totalMins)}*`);
+  fetch(proxyUrl,{method:"POST",body:JSON.stringify({text:lines.join("\n")}),headers:{"Content-Type":"application/json"}})
+    .catch(()=>{});
+}
+function postToSlack(iso,seating,courseLabel,timeDisplay){
+  const proxyUrl="https://silent-bush-64d9.amber-229.workers.dev/";
+  const d=parseISO(iso);
+  const dayName=d.toLocaleDateString("en-US",{weekday:"short",month:"numeric",day:"numeric"});
+  const seatLabel=seating===1?"1st seating":"2nd seating";
+  const text=`📍 *${dayName} · ${seatLabel}*\n${courseLabel} pushed at ${timeDisplay}`;
+  fetch(proxyUrl,{method:"POST",body:JSON.stringify({text}),headers:{"Content-Type":"application/json"}})
+    .catch(()=>{});
+}
+function logPush(iso,seatIdx,key){
+  const night=getNight(iso);
+  const t=nowTime();
+  night.seatings[seatIdx].pushTimes[key]=t;
+  openWriteIn=null;
+  saveState();
+  const course=COURSES.find(c=>c.key===key);
+  postToSlack(iso,seatIdx+1,course.label,fmt24(t));
+  if(key==="kamayan")postDinnerSummary(iso,seatIdx);
+  renderCourseList();
+}
+function unpush(iso,seatIdx,key){
+  const night=getNight(iso);
+  delete night.seatings[seatIdx].pushTimes[key];
+  openWriteIn=null;
+  saveState();renderCourseList();
+}
+function display12(t24){
+  // "17:30" -> "5:30"
+  if(!t24)return"";
+  const p=t24.split(":");
+  let h=parseInt(p[0]),mn=p[1];
+  if(h>=12)h=h===12?12:h-12;
+  return `${h}:${mn}`;
+}
+function parseWITime(raw){
+  // "6:23" -> "18:23" (always PM, so add 12 unless 12:xx)
+  raw=(raw||"").trim().replace(/[^\d:]/g,"");
+  const parts=raw.split(":");
+  if(parts.length<2)return null;
+  let h=parseInt(parts[0]),mn=parseInt(parts[1]);
+  if(isNaN(h)||isNaN(mn)||mn<0||mn>59||h<1||h>12)return null;
+  const h24=h===12?12:h+12; // 12pm stays 12, everything else +12
+  return `${String(h24).padStart(2,"0")}:${String(mn).padStart(2,"0")}`;
+}
+function toggleWI(key){openWriteIn=openWriteIn===key?null:key;renderCourseList();setTimeout(()=>{const i=document.getElementById("wi-"+key);if(i)i.focus();},60);}
+function openEdit(iso,seatIdx,key){openWriteIn=key;renderCourseList();setTimeout(()=>{const i=document.getElementById("wi-"+key);if(i)i.focus();},60);}
+function cancelWI(){openWriteIn=null;renderCourseList();}
+function saveWI(iso,seatIdx,key){
+  const inp=document.getElementById("wi-"+key);
+  if(!inp)return;
+  const t24=parseWITime(inp.value);
+  if(!t24){alert("Enter time as h:mm — for example 6:23");return;}
+  const night=getNight(iso);
+  night.seatings[seatIdx].pushTimes[key]=t24;
+  openWriteIn=null;
+  saveState();
+  const course=COURSES.find(c=>c.key===key);
+  postToSlack(iso,seatIdx+1,course.label,fmt24(t24));
+  if(key==="kamayan")postDinnerSummary(iso,seatIdx);
+  renderCourseList();
+}
+
+// ── SETUP ──
+function generateSeason(){
+  const start=document.getElementById("inp-start").value;
+  const end=document.getElementById("inp-end").value;
+  if(!start||!end){alert("Enter both start and end dates.");return;}
+  const s=parseISO(start),e=parseISO(end);
+  if(s>e){alert("Start must be before end.");return;}
+  let count=0;
+  const cur=new Date(s);
+  while(cur<=e){
+    const dow=cur.getDay();
+    if([3,4,5,6].includes(dow)){ // Wed=3,Thu=4,Fri=5,Sat=6
+      const iso=formatISO(cur);
+      if(!state.nights[iso])getNight(iso); // creates with default times
+      count++;
+    }
+    cur.setDate(cur.getDate()+1);
+  }
+  saveState();renderSetup();
+  alert(`Generated ${count} night${count!==1?"s":""}. You're all set!`);
+}
+function renderSetup(){
+  document.getElementById("inp-season").value=state.seasonName||"";
+  document.getElementById("inp-webhook").value=state.webhookUrl||"";
+  renderBrand();
+  // songs
+  document.getElementById("song-tbody").innerHTML=COURSES.map(c=>`
+    <tr>
+      <td>${c.label}</td>
+      <td><input type="text" value="${esc(state.songs[c.key]||"")}" placeholder="—"
+          oninput="state.songs['${c.key}']=this.value;saveState()"/></td>
+    </tr>`).join("");
+  // nights list
+  const keys=Object.keys(state.nights).sort();
+  const countEl=document.getElementById("dinner-count");
+  countEl.textContent=keys.length?`${keys.length} nights`:"";
+  const dl=document.getElementById("dinner-list");
+  if(!keys.length){dl.innerHTML=`<p class="empty">No nights yet — generate from season dates above.</p>`;return;}
+  const DAY_NAMES=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  dl.innerHTML=keys.map(iso=>{
+    const night=state.nights[iso];
+    const d=parseISO(iso);
+    const total=night.seatings.reduce((sum,s)=>sum+Object.keys(s.pushTimes||{}).length,0);
+    return`<div class="dinner-item">
+      <span class="di-label">${DAY_NAMES[d.getDay()]} ${iso.slice(5).replace("-","/")} </span>
+      <span class="di-meta">${fmt24(night.times[0])} · ${fmt24(night.times[1])}</span>
+      <span style="font-size:11px;color:var(--text3)">${total} pushes</span>
+      <button class="btn btn-sm" onclick="removeNight('${iso}')">×</button>
+    </div>`;
+  }).join("");
+}
+function removeNight(iso){
+  if(!confirm("Remove this night?"))return;
+  delete state.nights[iso];
+  saveState();renderSetup();
+}
+
+// ── DASHBOARD ──
+function allSeatings(){
+  // flatten all seatings across all nights into a list with metadata
+  const result=[];
+  Object.keys(state.nights).sort().forEach(iso=>{
+    const night=state.nights[iso];
+    night.seatings.forEach((s,i)=>{
+      if(Object.keys(s.pushTimes||{}).length>0)
+        result.push({iso,seating:i+1,start:night.times[i],pushTimes:s.pushTimes});
+    });
+  });
+  return result;
+}
+function computeAvgs(){
+  const seatings=allSeatings();
+  return COURSES.map((c,i)=>{
+    const nextKey=i<COURSES.length-1?COURSES[i+1].key:null;
+    const durs=seatings.map(s=>{
+      const push=s.pushTimes[c.key];
+      const end=nextKey?s.pushTimes[nextKey]:null;
+      if(!push||!end)return null;
+      const dur=toMins(end)-toMins(push);
+      return dur>=0?dur:null;
+    }).filter(v=>v!==null);
+    const avg=durs.length?Math.round(durs.reduce((a,b)=>a+b,0)/durs.length):null;
+    return{key:c.key,label:c.label,story:c.story||"",fullLabel:c.story?`${c.label} — ${c.story}`:c.label,song:state.songs[c.key]||"",avg,count:durs.length};
+  });
+}
+function setDashTab(t,btn){
+  dashTab=t;
+  document.querySelectorAll(".dash-tab").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");renderDashContent();
+}
+function renderDash(){renderDashContent();}
+function renderDashContent(){
+  const el=document.getElementById("dash-content");
+  if(dashTab==="avgs")el.innerHTML=buildAvgs();
+  else if(dashTab==="cue")el.innerHTML=buildCue();
+  else el.innerHTML=buildRaw();
+}
+function buildAvgs(){
+  const avgs=computeAvgs();
+  const total=allSeatings().length;
+  if(!total)return`<p class="empty">No push times logged yet.</p>`;
+  let h=`<p style="font-size:12px;color:var(--text3);margin-bottom:10px">${total} dinner${total!==1?"s":""} with data</p>`;
+  h+=`<div class="table-wrap"><table class="dt">
+    <thead><tr><th>Course</th><th>Song</th><th>Avg duration</th><th>#</th></tr></thead><tbody>`;
+  avgs.forEach(a=>{
+    h+=`<tr>
+      <td style="font-weight:500">${a.fullLabel}</td>
+      <td class="muted">${esc(a.song)||"—"}</td>
+      <td class="mono">${a.avg!==null?minsToDur(a.avg):`<span class="muted">—</span>`}</td>
+      <td class="muted">${a.count||`<span class="muted">—</span>`}</td>
+    </tr>`;
+  });
+  h+=`</tbody></table></div><div class="btn-row"><button class="btn" onclick="copyAvgsCSV()">Copy CSV</button></div>`;
+  return h;
+}
+function buildCue(){
+  const avgs=computeAvgs();
+  // use average meryenda push time across all seatings as the real dinner start
+  const seatings=allSeatings();
+  const meryendaPushes=seatings.map(s=>s.pushTimes["meryenda"]).filter(Boolean).map(t=>toMins(t));
+  const refStart=meryendaPushes.length
+    ?Math.round(meryendaPushes.reduce((a,b)=>a+b,0)/meryendaPushes.length)
+    :(()=>{const allT=Object.values(state.nights).flatMap(n=>n.times.map(t=>toMins(t))).filter(Boolean);return allT.length?Math.min(...allT):toMins("17:00");})();
+  let cursor=refStart;
+  let h=`<p style="font-size:12px;color:var(--text3);margin-bottom:10px">Reference start: ${minsToDisplay(refStart)}</p>`;
+  h+=`<div class="table-wrap"><table class="dt">
+    <thead><tr><th>Course</th><th>Song</th><th>Cue time</th><th>Duration</th></tr></thead><tbody>`;
+  avgs.forEach(a=>{
+    h+=`<tr>
+      <td style="font-weight:500">${a.fullLabel}</td>
+      <td class="muted">${esc(a.song)||"—"}</td>
+      <td class="${a.avg!==null?"cue-t":"muted"}">${a.avg!==null?minsToDisplay(cursor):"—"}</td>
+      <td class="mono">${a.avg!==null?minsToDur(a.avg):`<span class="muted">—</span>`}</td>
+    </tr>`;
+    if(a.avg!==null&&cursor!==null)cursor+=a.avg;
+  });
+  h+=`</tbody></table></div><div class="btn-row"><button class="btn" onclick="copyCueTSV()">Copy cue sheet</button></div>`;
+  return h;
+}
+function buildRaw(){
+  const seatings=allSeatings();
+  if(!seatings.length)return`<p class="empty">No push times logged yet.</p>`;
+  const DAY_NAMES=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  return seatings.map(s=>{
+    const d=parseISO(s.iso);
+    const title=`${DAY_NAMES[d.getDay()]} ${s.iso.slice(5).replace("-","/")} · ${s.seating===1?"1st":"2nd"} seating · ${fmt24(s.start)}`;
+    return`<div class="table-wrap" style="margin-bottom:12px">
+      <div class="table-ttl">${title}</div>
+      <table class="dt">
+        <thead><tr><th>Course</th><th>Push</th><th>Next push</th><th>Duration</th></tr></thead><tbody>
+        ${COURSES.map((c,i)=>{
+          const push=s.pushTimes[c.key]||"";
+          const nextKey=i<COURSES.length-1?COURSES[i+1].key:null;
+          const end=nextKey?s.pushTimes[nextKey]:"";
+          const dur=push&&end?toMins(end)-toMins(push):null;
+          return`<tr>
+            <td style="font-weight:500">${c.story?`${c.label} — ${c.story}`:c.label}</td>
+            <td class="mono">${push?fmt24(push):`<span class="muted">—</span>`}</td>
+            <td class="mono">${end?fmt24(end):`<span class="muted">—</span>`}</td>
+            <td class="mono">${dur!==null&&dur>=0?minsToDur(dur):`<span class="muted">—</span>`}</td>
+          </tr>`;
+        }).join("")}
+        </tbody>
+      </table>
+    </div>`;
+  }).join("");
+}
+function copyAvgsCSV(){
+  const avgs=computeAvgs();
+  let csv="Course,Song,Avg Duration (mins)\n";
+  avgs.forEach(a=>{csv+=`${a.label},${a.song},${a.avg!==null?a.avg:""}\n`;});
+  navigator.clipboard.writeText(csv).then(()=>alert("Copied!"));
+}
+function copyCueTSV(){
+  const avgs=computeAvgs();
+  const allTimes=Object.values(state.nights).flatMap(n=>n.times.map(t=>toMins(t))).filter(Boolean);
+  const refStart=allTimes.length?Math.min(...allTimes):toMins("17:00");
+  let cursor=refStart,txt="Course\tSong\tCue Time\tDuration\n";
+  avgs.forEach(a=>{
+    txt+=`${a.label}\t${a.song}\t${a.avg!==null?minsToDisplay(cursor):"—"}\t${a.avg!==null?minsToDur(a.avg):"—"}\n`;
+    if(a.avg!==null&&cursor!==null)cursor+=a.avg;
+  });
+  navigator.clipboard.writeText(txt).then(()=>alert("Copied! Paste into a spreadsheet."));
+}
+
+// ── INIT ──
+loadState();
+if(!state.activeDateISO)state.activeDateISO=todayISO();
+renderBrand();renderSetup();renderEntry();
+</script>
+
+
+</body></html>

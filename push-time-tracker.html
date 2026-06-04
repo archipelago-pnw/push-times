@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<!-- saved from url=(0051)file:///Users/bkwy/Downloads/service-tracker_8.html -->
+<!-- saved from url=(0051)file:///Users/bkwy/Downloads/service-tracker_9.html -->
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Service Tracker</title>
+<title>Push Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com/">
 <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
 <link href="./push-time-tracker_files/css2" rel="stylesheet">
@@ -146,7 +146,7 @@ select option{background:var(--bg3)}
 <div class="app">
 <nav class="nav">
   <div class="nav-left">
-    <div class="nav-brand">◆ Service Tracker</div>
+    <div class="nav-brand">◆ Push Tracker</div>
     <div class="nav-season" id="nav-season"></div>
   </div>
   <div class="nav-tabs">
@@ -798,7 +798,7 @@ function generateSeason(){
     cur.setDate(cur.getDate()+1);
   }
   saveState();renderSetup();
-  alert(`Generated ${count} service night${count!==1?"s":""}. You're all set!`);
+  alert(`Generated ${count} night${count!==1?"s":""}. You're all set!`);
 }
 function renderSetup(){
   document.getElementById("inp-season").value=state.seasonName||"";
